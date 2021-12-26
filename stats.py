@@ -25,17 +25,16 @@ class Stats:
         '''
             increment the score by the score delta always making sure that we save the best performing model as we see a new best score.
         '''
-        new_bestscore = False
         if not game_over:
             self.score += scoredelta       # increment the current score by the provided score delta.
-            if self.bestscore < self.score:
-                self.bestscore = self.score
-                new_bestscore  = True
+            logger.debug("Generation %d last known best score %d current score %d", generation, self.bestscore, self.score)
         else:
-            self.score = 0;
-        # ###
-        logger.info("Generation %d last known best score %d current score %d", generation, self.bestscore, self.score)
-        # ###
-        if new_bestscore and self.train and game_over:
+            self.score += 0;
+            logger.info("Game over: Generation %d last known best score %d current score %d", generation, self.bestscore, self.score)
+         # ###
+        if self.bestscore < self.score and self.train and game_over:
+            self.bestscore = self.score
             logger.info("Reached new best score %d. Agent stored to disk.", self.bestscore)
             self.nnet.save(os.path.join(self.modeldir,"generation-"+ str(generation)+"-score-"+str(self.bestscore),"model"))
+        # ###
+        if game_over: self.score = 0;

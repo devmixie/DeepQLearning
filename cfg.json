@@ -1,17 +1,17 @@
 {
    "display" : {
                     "render_display"           : true, 
-                    "display_width"            : 80,
-                    "display_height"           : 80,
+                    "display_width"            : 96,
+                    "display_height"           : 96,
                     "frames_per_second"        : 30 
                 },      
     "trainer": {      
                     "lookback"                 : 1,
-                    "batch_size"               : 16
+                    "batch_size"               : 128
                 },
     "runner" : {
                     "max_frame_per_generation" : 500,
-                    "max_generation"           : 500,
+                    "max_generation"           : 50,
                     "max_topk_index"           : 2,
                     "penalty_on_game_over"     : -10,
                     "score_delta_per_frame"    : 1

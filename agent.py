@@ -42,15 +42,12 @@ class Agent():
             #random_action_idx = np.random.randint(0, len(self.actions))
             #return self.actions[random_action_idx] # early exit
             topk = np.random.randint(1, max_topk_index+1)
-            logger.info("Deferring to a non-max hypothesis space.")
+            logger.debug("Deferring to a non-max hypothesis space. choosing topk %d", topk)
 
         # ###
         projected_rewards        = self.model.predict(state)            # predict the potential reward for all possible action.
         action_idx_at_max_reward = np.argpartition(projected_rewards[0], -topk)[-topk]
         #action_idx_at_max_reward = np.argmax(projected_rewards[0])      # choose the action that is projected to have the max reward.
-        print ("topk ", topk)
-        print ("projected_rewards ", projected_rewards[0])
-        print ("action_idx_at_max_reward ", action_idx_at_max_reward)
         return  self.actions[action_idx_at_max_reward]
 
     def add_to_historical_space(self, state, action, reward, next_state, game_over):
