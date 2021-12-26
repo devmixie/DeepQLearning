@@ -7,7 +7,7 @@
                 },      
     "trainer": {      
                     "lookback"                 : 1,
-                    "batch_size"               : 128
+                    "batch_size"               : 16
                 },
     "runner" : {
                     "max_frame_per_generation" : 500,

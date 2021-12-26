@@ -37,17 +37,17 @@ class Agent():
             Note that in order for the machine to explore new possibilities, at certain times a random action is taken.
             This way of picking a random action helps the machine to learn new action sequences which it had not learnt before - potentially.
         '''
-        topk = 1; #choose the max element (ie) 1st largest reward.
-        if np.random.rand() <= self.random_action_fallback_factor:       # take a random action if we are in random action space.
-            #random_action_idx = np.random.randint(0, len(self.actions))
-            #return self.actions[random_action_idx] # early exit
-            topk = np.random.randint(1, max_topk_index+1)
-            logger.debug("Deferring to a non-max hypothesis space. choosing topk %d", topk)
+        #topk = 1; #choose the max element (ie) 1st largest reward.
+        #if np.random.rand() <= self.random_action_fallback_factor:       # take a random action if we are in random action space.
+        #    #random_action_idx = np.random.randint(0, len(self.actions))
+        #    #return self.actions[random_action_idx] # early exit
+        #    topk = np.random.randint(1, max_topk_index+1)
+        #    logger.debug("Deferring to a non-max hypothesis space. choosing topk %d", topk)
 
         # ###
         projected_rewards        = self.model.predict(state)            # predict the potential reward for all possible action.
-        action_idx_at_max_reward = np.argpartition(projected_rewards[0], -topk)[-topk]
-        #action_idx_at_max_reward = np.argmax(projected_rewards[0])      # choose the action that is projected to have the max reward.
+        #action_idx_at_max_reward = np.argpartition(projected_rewards[0], -topk)[-topk]
+        action_idx_at_max_reward = np.argmax(projected_rewards[0])      # choose the action that is projected to have the max reward.
         return  self.actions[action_idx_at_max_reward]
 
     def add_to_historical_space(self, state, action, reward, next_state, game_over):
