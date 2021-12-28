@@ -40,8 +40,8 @@ class Nnet:
         '''
             Builds the learning rate function to be used for learning.
         ''' 
-        initial_learning_rate = 1e-6
-        maximal_learning_rate = 1e-2
+        initial_learning_rate = 1e-5
+        maximal_learning_rate = 1e-3
         step_size             = 200
         self.learning_rate = tfa.optimizers.ExponentialCyclicalLearningRate(
             initial_learning_rate,
@@ -51,7 +51,7 @@ class Nnet:
 
     def build(self):
         model = tf.keras.applications.MobileNetV2(weights=None,input_shape=self.input_dim,classes=self.output_dim,classifier_activation="linear",pooling="avg")
-        model.compile(loss='huber',optimizer=Adam(learning_rate=self.learning_rate))
+        model.compile(loss='mse',optimizer=tfa.optimizers.AdamW(learning_rate=self.learning_rate,weight_decay=1e-4))
         
         return model;
 

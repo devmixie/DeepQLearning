@@ -26,7 +26,7 @@ class Agent():
         logger.info("The game has the following actions [{}]".format(' '.join(map(str, actions))));
         #
         self.future_reward_discount_factor = 0.9    # factor which weighs down future reward estimation of our model.
-        self.random_action_fallback_factor = 0.0 #0.95   # factor which controls how frequent we choose a random action over our model's prection.
+        self.random_action_fallback_factor = 0.95   # factor which controls how frequent we choose a random action over our model's prection.
         self.random_action_decay_factor    = 0.975  # factor which controls how much we decay the random action fallover factor over time.
         self.random_action_factor_floor    = 0.01   # the minimum value to which the random_action_fallback_factor can decay to.
         if not self.train:
