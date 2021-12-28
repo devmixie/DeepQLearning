@@ -20,6 +20,7 @@ from extractconfig import ConfigParser
 from nnet import Nnet
 from agent import Agent
 from stats import Stats
+from collections import deque
 
 class Game:
     def __init__(self,cfgjson,modeldir,modelfl):
@@ -52,8 +53,8 @@ class Game:
         #       frame_height x frame_width x frame_channels: 
         #            dimension of the input image which we operate on.  
         _nnet_input_dim = (self.cfg['display']['display_width'],
-                                self.cfg['display']['display_height'],
-                                self.cfg['trainer']['lookback'])
+                            self.cfg['display']['display_height'],
+                            self.cfg['trainer']['lookback'])
         
         # _nnet_output_dim:
         # the output dimension for the neural net is basically the rewards for each of the possible actions.
@@ -63,14 +64,17 @@ class Game:
         _nnet_output_dim      = len(self.environment.getActionSet())
 
         self.nnet             = Nnet(_nnet_input_dim,_nnet_output_dim,modeldir,modelfl)
-        self.model            = self.nnet.model; #the actual neural network instance
+        self.model            = self.nnet.model; #the actual neural network instance which is used for taking action in environment.
             
         # let's build our agent using our model
-        self.agent            = Agent(self.model,self.environment.getActionSet())
+        self.agent            = Agent(self.model, self.environment.getActionSet(),self.train,self.cfg['trainer']['lookback'])
         self.max_topk_index   = max(self.cfg['runner']['max_topk_index'],len(self.environment.getActionSet()))
 
         # let's initialize our statistics model
         self.stats            = Stats(self.nnet,modeldir,self.train)
+
+        # state variable holding the last lookback number of seen states
+        self.state            = deque(maxlen=self.cfg['trainer']['lookback'])
 
     def build_game(self):
         '''
@@ -86,14 +90,16 @@ class Game:
     def run(self):
         def process_state(state):
             state = state.reshape(1,state.shape[0],state.shape[1],1)
-            return state
+            self.state.append(state)
+            return np.concatenate(self.state,axis=3)
+
         # ###
         for generation in range(self.cfg['runner']['max_generation']):
             self.environment.init()
             reward    = 0;       # variable that tracks the reward that is got on every action
             game_over = False;   # variable that tracks if the game is still in progress or if it had ended (Ex: the actor crashed, timeout)
             state     = process_state(self.environment.getScreenGrayscale())
-            for _ in range(self.cfg['runner']['max_frame_per_generation']):
+            for frame in range(self.cfg['runner']['max_frame_per_generation']):
                 if self.environment.game_over():
                     self.environment.reset_game()
                 # ###
@@ -101,15 +107,15 @@ class Game:
                 reward     = self.environment.act(action)
                 game_over  = self.environment.game_over()
                 # ###
-                if reward == 0: reward = 1.0 # make sure we do positive reinforcement, IF the game is still going on.
+                if reward == 0: reward = self.cfg['runner']['score_delta_per_frame']   # make sure we do positive reinforcement, IF the game is still going on.
                 if game_over:   reward = self.cfg['runner']['penalty_on_game_over']
                 self.stats.handle_state(generation, game_over, self.cfg['runner']['score_delta_per_frame'])
 
                 # ###
                 next_state = process_state(self.environment.getScreenGrayscale())
                 self.agent.add_to_historical_space(state, action, reward, next_state, game_over)
-                if self.train and len(self.agent.historical_space) >= self.cfg['trainer']['batch_size']:
-                    self.agent.train(self.cfg['trainer']['batch_size'])
+                if self.train and len(self.agent.historical_space) >= self.agent.historical_space.maxlen : # self.cfg['trainer']['batch_size']:
+                    self.agent.trainloop(self.cfg['trainer']['batch_size'], frame)
                 state      = next_state;
                 # ###
                 
