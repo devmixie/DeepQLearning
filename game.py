@@ -65,7 +65,7 @@ class Game:
 
         self.nnet             = Nnet(_nnet_input_dim,_nnet_output_dim,modeldir,modelfl)
         self.model            = self.nnet.model; #the actual neural network instance which is used for taking action in environment.
-            
+         
         # let's build our agent using our model
         self.agent            = Agent(self.model, self.environment.getActionSet(),self.train,self.cfg['trainer']['lookback'])
         self.max_topk_index   = max(self.cfg['runner']['max_topk_index'],len(self.environment.getActionSet()))
@@ -114,8 +114,8 @@ class Game:
                 # ###
                 next_state = process_state(self.environment.getScreenGrayscale())
                 self.agent.add_to_historical_space(state, action, reward, next_state, game_over)
-                if self.train and len(self.agent.historical_space) >= self.agent.historical_space.maxlen : # self.cfg['trainer']['batch_size']:
-                    self.agent.trainloop(self.cfg['trainer']['batch_size'], frame)
+                if self.train and len(self.agent.historical_space) >= self.cfg['trainer']['batch_size']:
+                    self.agent.trainloop(self.cfg['trainer']['batch_size'])
                 state      = next_state;
                 # ###
                 

@@ -13,7 +13,7 @@ import tensorflow as tf
 logger.info("Num GPUs Available: %s ", len(tf.config.list_physical_devices('GPU')))
 
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, Flatten, MaxPooling2D, Dropout
+from tensorflow.keras   import layers
 from tensorflow.keras.optimizers import Adam,SGD
 import tensorflow_addons as tfa
 
@@ -40,19 +40,32 @@ class Nnet:
         '''
             Builds the learning rate function to be used for learning.
         ''' 
-        initial_learning_rate = 1e-5
-        maximal_learning_rate = 1e-3
-        step_size             = 200
-        self.learning_rate = tfa.optimizers.ExponentialCyclicalLearningRate(
-            initial_learning_rate,
-            maximal_learning_rate,
-            step_size
-        )
+        #initial_learning_rate = 1e-6
+        #maximal_learning_rate = 1e-4
+        #step_size             = 2000
+        #self.learning_rate = tfa.optimizers.ExponentialCyclicalLearningRate(
+        #    initial_learning_rate,
+        #    maximal_learning_rate,
+        #    step_size
+        #)
+        self.learning_rate = 4.0 * 1e-4;
 
     def build(self):
-        model = tf.keras.applications.MobileNetV2(weights=None,input_shape=self.input_dim,classes=self.output_dim,classifier_activation="linear",pooling="avg")
-        model.compile(loss='mse',optimizer=tfa.optimizers.AdamW(learning_rate=self.learning_rate,weight_decay=1e-4))
+        #model = tf.keras.applications.MobileNetV2(weights=None,input_shape=self.input_dim,classes=self.output_dim,classifier_activation="linear",pooling="avg")
+        model = Sequential()
+        model.add(layers.Conv2D(32, (8, 8),input_shape=self.input_dim))
+        model.add(layers.Activation('relu'))
+        model.add(layers.Conv2D(64, (4, 4)))
+        model.add(layers.Activation('relu'))
+        model.add(layers.Conv2D(64, (3, 3)))
+        model.add(layers.Activation('relu'))
+        model.add(layers.Flatten())
+        model.add(layers.Dense(64))
+        model.add(layers.Activation('relu'))
+        model.add(layers.Dense(self.output_dim))
+        model.add(layers.Activation('linear'))
         
+        model.compile(loss='mse',optimizer=Adam(learning_rate=self.learning_rate))
         return model;
 
     def load(self, fl):

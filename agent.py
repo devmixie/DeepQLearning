@@ -31,8 +31,9 @@ class Agent():
         self.random_action_factor_floor    = 0.01   # the minimum value to which the random_action_fallback_factor can decay to.
         if not self.train:
             self.random_action_fallback_factor = 0  # disable fallback to topk incase we are not training.
+        self.skip_training_factor          = 0.5;
         #
-        self.historical_space = deque(maxlen=500)
+        self.historical_space = deque(maxlen=1000)
 
     def next_move(self, state, max_topk_index):
         '''
@@ -43,20 +44,15 @@ class Agent():
             Usually this is done by choosing just a random action, but here we choose a topk-random action; that is choose a non-optimal solution from the topk results.
         '''
         #if state.shape[3] < self.lookback: # if we donot have a large enough state space covering the lookback, just return a random action. 
-        if len(self.historical_space) < self.historical_space.maxlen:
+        if (state.shape[3] < self.lookback) or (np.random.rand() <= self.random_action_fallback_factor):
             random_action_idx = np.random.randint(0, len(self.actions))
             return self.actions[random_action_idx] # early exit
         
-        topk = 1; #choose the max element (ie) 1st largest reward.
-        if np.random.rand() <= self.random_action_fallback_factor:
-            topk = np.random.randint(1+1, max_topk_index+1) #choose from top2 to topmaxk
-            logger.debug("Deferring to a non-max hypothesis space. choosing topk %d", topk)
-
         # ###
         projected_rewards        = self.model.predict(state)            # predict the potential reward for all possible action.
-        print (projected_rewards)
-        action_idx_at_max_reward = np.argpartition(projected_rewards[0], -topk)[-topk]
-        #action_idx_at_max_reward = np.argmax(projected_rewards[0])      # choose the action that is projected to have the max reward.
+        print ("projected_rewards ", projected_rewards, " epsilon ", self.random_action_fallback_factor)
+        action_idx_at_max_reward = np.argmax(projected_rewards[0])      # choose the action that is projected to have the max reward.
+        print ("projected_rewards ", projected_rewards, " epsilon ", self.random_action_fallback_factor, " action ", action_idx_at_max_reward)
         return  self.actions[action_idx_at_max_reward]
 
     def add_to_historical_space(self, state, action, reward, next_state, game_over):
@@ -71,7 +67,7 @@ class Agent():
         if state.shape[3] >= self.lookback: #start adding to historical space when we have enough lookback. we stack states along 3rd axis, so checking the 3rd dimension for lookback
             self.historical_space.append((state, action, reward, next_state, game_over))
 
-    def trainloop(self, batch_size, frame):
+    def trainloop(self, batch_size):
         '''
             The taining function which adjusts the model's weight to perform better.
             The training process is done as follows:
@@ -83,6 +79,8 @@ class Agent():
                 - calculate the current state reward vector as predicted by the model for all possible actions.
                 - for the current state reward vector, change the reward in the direction of the action that was taken to the lookahead reward.
         '''
+        if (np.random.rand() <= self.skip_training_factor):
+            return;
         batch = random.sample(self.historical_space, batch_size)
         for state, action, reward, next_state, game_over in batch:
             lookahead_reward = reward

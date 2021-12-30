@@ -36,9 +36,9 @@ class Stats:
         if self.bestscore < self.score and self.train and game_over:
             self.bestscore = self.score
             logger.info("Reached new best score %d. Agent stored to disk.", self.bestscore)
-            self.nnet.save(os.path.join(self.modeldir,"generation-"+ str(generation)+"-score-"+str(int(self.bestscore*10)),"model"))
+            self.nnet.save(os.path.join(self.modeldir,"generation-"+ str(generation)+"-score-"+str(int(self.bestscore)),"model"))
         # ###
         if game_over:
             self.score_history.append(self.score) 
-            logger.info("Game Over: Generation %d last known best score %d Last20 runs avg score %d current score %d", generation, self.bestscore*10, mean(self.score_history)*10, self.score*10)
+            logger.info("Game Over: Generation %d last known best score %d Last20 runs avg score %d current score %d", generation, self.bestscore, mean(self.score_history), self.score)
             self.score = 0.0;
