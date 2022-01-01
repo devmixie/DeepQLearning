@@ -31,7 +31,6 @@ class Agent():
         self.random_action_factor_floor    = 0.01   # the minimum value to which the random_action_fallback_factor can decay to.
         if not self.train:
             self.random_action_fallback_factor = 0  # disable fallback to topk incase we are not training.
-        self.skip_training_factor          = 0.5;
         #
         self.historical_space = deque(maxlen=1000)
 
@@ -79,8 +78,6 @@ class Agent():
                 - calculate the current state reward vector as predicted by the model for all possible actions.
                 - for the current state reward vector, change the reward in the direction of the action that was taken to the lookahead reward.
         '''
-        if (np.random.rand() <= self.skip_training_factor):
-            return;
         batch = random.sample(self.historical_space, batch_size)
         for state, action, reward, next_state, game_over in batch:
             lookahead_reward = reward
